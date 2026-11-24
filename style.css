@@ -1,0 +1,332 @@
+/* Night Touge — road-sign UI on a dark ground. One accent: amber.
+   Numbers in monospace, like a dashboard. No gradients-as-decoration,
+   no glass cards. See design/DESIGN_CONSTITUTION.md. */
+
+:root {
+  --night: #05080f;
+  --panel: #0a0f1c;
+  --panel-edge: #232c42;
+  --ink: #e8e4da;
+  --ink-dim: #9aa3b5;
+  --amber: #ffb454;
+  --amber-deep: #e08e1b;
+  --red: #ff3b30;
+  --teal: #57e6c9;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--night);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+#app { position: fixed; inset: 0; }
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+
+#hud { position: absolute; inset: 0; pointer-events: none; }
+
+.hud-left {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hud-block { display: flex; flex-direction: column; }
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.hud-value {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--amber);
+  line-height: 1.1;
+}
+
+.hud-right {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.hud-btn {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(10, 15, 28, 0.82);
+  border: 1px solid var(--panel-edge);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.hud-btn:hover { border-color: var(--amber); color: var(--amber); }
+.hud-btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.dash {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  text-align: right;
+}
+
+.dash-speed {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 0.95;
+  color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+
+.dash-unit {
+  font-size: 16px;
+  color: var(--amber);
+  margin-left: 8px;
+  letter-spacing: 0.1em;
+}
+
+.dash-best {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+
+.callout {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--teal);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+.callout.pop { animation: callout-pop 0.9s ease-out forwards; }
+
+@keyframes callout-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  15% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+  30% { transform: translateX(-50%) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-10px); }
+}
+
+/* ---------- Screens (service-area signs) ---------- */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 15, 0.55);
+  padding: 20px;
+}
+
+.sign {
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-top: 3px solid var(--amber);
+  border-radius: 6px;
+  max-width: 520px;
+  width: 100%;
+  padding: 28px 36px 24px;
+  text-align: left;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.sign-kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.sign-kicker.danger { color: var(--red); }
+
+.sign-title {
+  margin: 0 0 12px;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sign-title.small { font-size: 42px; }
+
+.sign-sub {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px 16px;
+  align-items: center;
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+kbd {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--ink);
+  background: #141b2e;
+  border: 1px solid var(--panel-edge);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-right: 4px;
+  display: inline-block;
+}
+
+.btn-primary {
+  font: inherit;
+  display: block;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #16100a;
+  background: var(--amber);
+  border: 1px solid var(--amber-deep);
+  border-radius: 4px;
+  padding: 14px 18px;
+  cursor: pointer;
+}
+.btn-primary:hover { background: #ffc06e; }
+.btn-primary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.btn-secondary {
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  border-radius: 4px;
+  padding: 11px 14px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+.btn-secondary:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+#btn-restart-pause { width: 100%; }
+
+.sign-row { display: flex; gap: 10px; }
+.sign-row .btn-secondary { flex: 1; }
+
+.sign-best {
+  margin: 16px 0 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  color: var(--amber);
+}
+
+.sign-note {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.over-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  margin: 0 0 18px;
+}
+.over-stats > div { display: flex; flex-direction: column; }
+
+.over-value {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.new-best {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* ---------- Toast & crash flash ---------- */
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  background: rgba(10, 15, 28, 0.92);
+  border: 1px solid var(--amber);
+  color: var(--ink);
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.crash-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 59, 48, 0.28);
+  pointer-events: none;
+  animation: flash-out 0.5s ease-out forwards;
+}
+
+@keyframes flash-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .callout.pop { animation-duration: 0.01s; }
+  .crash-flash { animation-duration: 0.01s; }
+}

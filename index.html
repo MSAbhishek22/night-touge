@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Night Touge — a 3D night-highway driver</title>
+<meta name="description" content="Night Touge: a small 3D endless driver. Night highway, amber streetlights, close passes. Built with Three.js.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden" aria-hidden="true">
+    <div class="hud-left">
+      <div class="hud-block">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="hud-score">0</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">Distance</span>
+        <span class="hud-value" id="hud-dist">0 m</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">Near misses</span>
+        <span class="hud-value" id="hud-near">0</span>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <button id="btn-effects" class="hud-btn" type="button" title="Toggle effects quality">Effects: High</button>
+      <button id="btn-mute" class="hud-btn" type="button" title="Mute or unmute sound (M)">Sound: On</button>
+      <button id="btn-pause" class="hud-btn" type="button" title="Pause the game (P)">Pause</button>
+    </div>
+
+    <div id="callout" class="callout hidden"></div>
+
+    <div class="dash">
+      <div class="dash-speed"><span id="dash-speed">0</span><span class="dash-unit">km/h</span></div>
+      <div class="dash-best">Best <span id="dash-best">0</span></div>
+    </div>
+  </div>
+
+  <!-- Start screen -->
+  <section id="screen-start" class="screen">
+    <div class="sign">
+      <p class="sign-kicker">OpenGame Game Jam #1 · Racing</p>
+      <h1 class="sign-title">Night<br>Touge</h1>
+      <p class="sign-sub">A night highway, a low coupe, and traffic that does not move for you. Thread the gaps. Close passes pay.</p>
+      <div class="controls-grid" aria-label="Controls">
+        <div><kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd></div><span>Steer</span>
+        <div><kbd>↑</kbd> or <kbd>W</kbd></div><span>Accelerate</span>
+        <div><kbd>↓</kbd> or <kbd>S</kbd></div><span>Brake</span>
+        <div><kbd>P</kbd></div><span>Pause</span>
+        <div><kbd>M</kbd></div><span>Sound on/off</span>
+        <div><kbd>R</kbd></div><span>Restart after a crash</span>
+      </div>
+      <button id="btn-start" class="btn-primary" type="button">Start driving</button>
+      <p class="sign-best">Best score: <span id="start-best">0</span></p>
+      <p class="sign-note">Desktop + keyboard. The left lane is oncoming — it pays the best near misses and ends the most runs.</p>
+    </div>
+  </section>
+
+  <!-- Pause screen -->
+  <section id="screen-pause" class="screen hidden">
+    <div class="sign">
+      <h2 class="sign-title small">Paused</h2>
+      <p class="sign-sub">The highway is waiting. It is patient. The traffic is not.</p>
+      <button id="btn-resume" class="btn-primary" type="button">Resume</button>
+      <button id="btn-restart-pause" class="btn-secondary" type="button">Restart run</button>
+      <div class="sign-row">
+        <button id="btn-effects-pause" class="btn-secondary" type="button">Effects: High</button>
+        <button id="btn-mute-pause" class="btn-secondary" type="button">Sound: On</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Game over screen -->
+  <section id="screen-over" class="screen hidden">
+    <div class="sign">
+      <p class="sign-kicker danger">Run over</p>
+      <h2 class="sign-title small">Wrecked</h2>
+      <p class="sign-sub" id="over-line">The guardrail sends its regards.</p>
+      <div class="over-stats">
+        <div><span class="hud-label">Score</span><span class="over-value" id="over-score">0</span></div>
+        <div><span class="hud-label">Distance</span><span class="over-value" id="over-dist">0 m</span></div>
+        <div><span class="hud-label">Near misses</span><span class="over-value" id="over-near">0</span></div>
+        <div><span class="hud-label">Best</span><span class="over-value" id="over-best">0</span></div>
+      </div>
+      <p id="over-newbest" class="new-best hidden">New best score</p>
+      <button id="btn-again" class="btn-primary" type="button">Drive again</button>
+      <p class="sign-note">or press <kbd>R</kbd></p>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="crash-flash" class="crash-flash hidden"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
