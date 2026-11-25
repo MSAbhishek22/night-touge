@@ -157,6 +157,31 @@ html, body {
   padding: 20px;
 }
 
+/* Start screen only: dock the sign to the left and leave the highway
+   visible. The 3D scene already rolls behind this panel on first load
+   (menu attract mode), so the panel must not hide it behind a full-screen
+   dim. Pause / game-over keep the full-screen dim above. */
+#screen-start {
+  justify-content: flex-start;
+  background: linear-gradient(90deg, rgba(5, 8, 15, 0.88) 0%, rgba(5, 8, 15, 0.72) 400px, rgba(5, 8, 15, 0.25) 620px, rgba(5, 8, 15, 0) 820px);
+  padding: 20px 20px 20px 32px;
+}
+
+.sign-live {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--amber);
+}
+
+@media (max-width: 760px) {
+  #screen-start {
+    justify-content: center;
+    background: rgba(5, 8, 15, 0.55);
+    padding: 20px;
+  }
+}
+
 .sign {
   background: var(--panel);
   border: 1px solid var(--panel-edge);
