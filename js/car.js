@@ -87,7 +87,9 @@ function glowSprite(color, scale, opacity) {
 export function buildCar({ color = 0x8a8f98, isPlayer = false } = {}) {
   const car = new THREE.Group();
   const paint = new THREE.MeshStandardMaterial({
-    color, metalness: 0.55, roughness: 0.38,
+    color,
+    metalness: isPlayer ? 0.65 : 0.55,
+    roughness: isPlayer ? 0.3 : 0.38,
   });
 
   const shadow = new THREE.Mesh(
@@ -142,7 +144,10 @@ export function buildCar({ color = 0x8a8f98, isPlayer = false } = {}) {
     glowMeshes.push(glow);
   }
 
-  const tl = new THREE.Mesh(GEO.taillight, MAT.taillight);
+  // The player gets a private taillight material so braking can flare
+  // it without lighting up every traffic car on the road.
+  const tlMat = isPlayer ? MAT.taillight.clone() : MAT.taillight;
+  const tl = new THREE.Mesh(GEO.taillight, tlMat);
   tl.position.set(0, 0.68, 2.16);
   car.add(tl);
   const tlGlow = glowSprite(0xff3b30, 1.15, 0.4);
@@ -166,12 +171,26 @@ export function buildCar({ color = 0x8a8f98, isPlayer = false } = {}) {
     under.scale.set(1, 1.6, 1);
     car.add(under);
     glowMeshes.push(under);
+    // Headlight spill — a soft pool of light on the asphalt ahead.
+    const beam = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.2, 13),
+      new THREE.MeshBasicMaterial({
+        map: getGlowTexture(), color: 0xffe9bb, transparent: true, opacity: 0.17,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }),
+    );
+    beam.rotation.x = -Math.PI / 2;
+    beam.position.set(0, 0.05, -9.0);
+    car.add(beam);
+    glowMeshes.push(beam);
   }
 
   car.userData = {
     wheels,
     bodyMat: paint,
     glowMeshes,
+    brakeMat: isPlayer ? tlMat : null,
+    brakeGlow: isPlayer ? tlGlow : null,
     length: 4.4,
     width: 1.9,
   };

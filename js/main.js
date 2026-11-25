@@ -274,6 +274,17 @@ function updatePlayerVisual(dt) {
   playerCar.rotation.x = pitch;
   const spin = (speed * dt) / 0.34;
   for (const w of playerCar.userData.wheels) w.rotation.x -= spin;
+
+  // Brake flare: the player's taillight burns brighter under braking.
+  const { brakeMat, brakeGlow } = playerCar.userData;
+  if (brakeMat) {
+    const target = throttleDown() && state === 'playing' ? 5.2 : 2.6;
+    brakeMat.emissiveIntensity += (target - brakeMat.emissiveIntensity) * (1 - Math.exp(-14 * dt));
+    if (brakeGlow) {
+      const gs = brakeMat.emissiveIntensity > 3.4 ? 1.5 : 1.15;
+      brakeGlow.scale.setScalar(gs);
+    }
+  }
 }
 
 function updateCamera(dt) {
@@ -368,7 +379,7 @@ frame();
 
 // Read-only snapshot for the automated QA harness (qa/smoke.mjs).
 window.__NT = {
-  version: '1.0.0',
+  version: '1.1.0',
   start: startGame,
   getState() {
     return {

@@ -135,8 +135,29 @@ export function createWorld(scene) {
   ground.position.set(0, -0.06, -170);
   scene.add(ground);
 
-  // ---- Sky: stars + moon (static relative to the camera) ----
+  // ---- Sky: gradient dome + stars + moon (static relative to camera) ----
   const sky = new THREE.Group();
+  // One canvas gradient for the whole sky: near-black up top, deep blue
+  // at the horizon, a faint warm band where the city sits. Cheap depth.
+  const skyCanvas = document.createElement('canvas');
+  skyCanvas.width = 4; skyCanvas.height = 256;
+  const sg = skyCanvas.getContext('2d');
+  const skyGrad = sg.createLinearGradient(0, 0, 0, 256);
+  skyGrad.addColorStop(0, '#02040a');
+  skyGrad.addColorStop(0.55, '#070d1d');
+  skyGrad.addColorStop(0.82, '#0c1628');
+  skyGrad.addColorStop(0.93, '#16203a');
+  skyGrad.addColorStop(1, '#1c1a18');
+  sg.fillStyle = skyGrad;
+  sg.fillRect(0, 0, 4, 256);
+  const skyTex = new THREE.CanvasTexture(skyCanvas);
+  skyTex.colorSpace = THREE.SRGBColorSpace;
+  const skyDome = new THREE.Mesh(
+    new THREE.SphereGeometry(880, 20, 12),
+    new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false }),
+  );
+  skyDome.position.set(0, -40, -80);
+  sky.add(skyDome);
   const starGeo = new THREE.BufferGeometry();
   const starPos = [];
   for (let i = 0; i < 700; i++) {
@@ -160,6 +181,16 @@ export function createWorld(scene) {
   );
   moon.position.set(-235, 148, -470);
   sky.add(moon);
+  // Moon halo — one soft glow plane behind the disc.
+  const moonHalo = new THREE.Mesh(
+    new THREE.PlaneGeometry(120, 120),
+    new THREE.MeshBasicMaterial({
+      map: getGlowTexture(), color: 0xdfe8ff, transparent: true, opacity: 0.32,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }),
+  );
+  moonHalo.position.set(-235, 148, -478);
+  sky.add(moonHalo);
   scene.add(sky);
 
   // ---- Road segments (pooled) ----
@@ -184,6 +215,14 @@ export function createWorld(scene) {
   const poolTex = makePoolTexture();
   const poolGeo = new THREE.CircleGeometry(3.6, 18);
 
+  // Guardrail reflectors — one small amber eye per rail per segment.
+  // Shared geometry/material, so the whole set costs almost nothing
+  // and its rhythm is what sells speed at the edge of the road.
+  const reflGeo = new THREE.BoxGeometry(0.07, 0.1, 0.16);
+  const reflMat = new THREE.MeshStandardMaterial({
+    color: 0x201404, emissive: 0xffb454, emissiveIntensity: 2.4,
+  });
+
   const lampGlows = [];
   const segments = [];
 
@@ -202,7 +241,7 @@ export function createWorld(scene) {
       new THREE.PlaneGeometry(5.2, 5.2),
       new THREE.MeshBasicMaterial({
         map: getGlowTexture(), color: 0xffb454, transparent: true,
-        opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: 0.58, blending: THREE.AdditiveBlending, depthWrite: false,
         side: THREE.DoubleSide,
       }),
     );
@@ -216,6 +255,7 @@ export function createWorld(scene) {
         blending: THREE.AdditiveBlending, depthWrite: false,
       }),
     );
+    pool.material.opacity = 0.68;
     pool.rotation.x = -Math.PI / 2;
     pool.position.set(-side * 1.55, 0.04, 0);
     lamp.add(pool);
@@ -233,6 +273,9 @@ export function createWorld(scene) {
       const rail = new THREE.Mesh(railGeo, railMat);
       rail.position.set(side * 6.7, 0.45, 0);
       group.add(rail);
+      const refl = new THREE.Mesh(reflGeo, reflMat);
+      refl.position.set(side * 6.58, 0.58, 0);
+      group.add(refl);
     }
     if (i % 4 === 0) {
       group.add(buildLamp(i % 8 === 0 ? -1 : 1));
@@ -252,6 +295,19 @@ export function createWorld(scene) {
     hill.scale.z = 0.55;
     scene.add(hill);
     hills.push({ mesh: hill, s: i * 140 + Math.random() * 60 });
+  }
+
+  // ---- Far mountain ring (second, taller silhouette layer) ----
+  const farHillMat = new THREE.MeshLambertMaterial({ color: 0x0e1a33, flatShading: true, fog: false });
+  const farHills = [];
+  for (let i = 0; i < 8; i++) {
+    const r = 120 + Math.random() * 80;
+    const hill = new THREE.Mesh(new THREE.ConeGeometry(r, 58 + Math.random() * 42, 6), farHillMat);
+    const side = i % 2 === 0 ? -1 : 1;
+    hill.position.x = side * (230 + Math.random() * 120);
+    hill.scale.z = 0.5;
+    scene.add(hill);
+    farHills.push({ mesh: hill, s: i * 260 + Math.random() * 90 });
   }
 
   // ---- Distant city glow, right side (slow parallax, two tiling planes) ----
@@ -305,6 +361,11 @@ export function createWorld(scene) {
     }
     for (const h of hills) {
       if (h.s - travelled < -80) h.s += 1400;
+      h.mesh.position.z = -(h.s - travelled);
+      h.mesh.position.y = 0;
+    }
+    for (const h of farHills) {
+      if (h.s - travelled < -160) h.s += 2080;
       h.mesh.position.z = -(h.s - travelled);
       h.mesh.position.y = 0;
     }
